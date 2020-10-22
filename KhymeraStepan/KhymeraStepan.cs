@@ -125,7 +125,7 @@ namespace KhymeraStepan
                     {                        
 
                         //check if can duplicate
-                        if (r.Energy > 300 && wannaAddMore(r.Position, map, mybits) && mybits.Count() <= 100 ){
+                        if (r.Energy > 300 && wannaAddMore(r.Position, map, mybits) && mybits.Count() < 100 ){
                             return new CreateNewRobotCommand();
                         }
                         else  //collect energy if not
@@ -383,7 +383,7 @@ namespace KhymeraStepan
                     if (mybits.Where(m => m.Position.Equals(run)).Count() > 0) { continue; }
                     if (round == 0)
                     {
-                        var myNearbyBots = HowManyRobots(run, mybits, 2);
+                        var myNearbyBots = HowManyRobots(run, mybits, 4);
                         var onesThatMoved = myNearbyBots.Where(b => robots.IndexOf(b) <  robotToMoveIndex).ToList();
                         if (onesThatMoved.Count() > 0) {
                             continue; 
@@ -392,7 +392,7 @@ namespace KhymeraStepan
                     {
                         var myNearbyBots = HowManyRobots(run, mybits, 4);
                         int nearbyStations = HowManyStations(run, stations);
-                        if (myNearbyBots.Count() >= nearbyStations)
+                        if (myNearbyBots.Count() >= nearbyStations) 
                         {
                             continue;
                         }
