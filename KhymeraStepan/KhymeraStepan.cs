@@ -30,10 +30,10 @@ using System.ComponentModel;
 
 namespace KhymeraStepan
 {
-    class KhymeraStepan : IRobotAlgorithm   
+    public class KhymeraStepan : IRobotAlgorithm
     {
-        static int round = 0;
-        static Dictionary<int , int > fate;
+        public static int round = 0;
+        public static Dictionary<int, int> fate = new Dictionary<int, int>();
         public KhymeraStepan()
         {
             Logger.OnLogRound += Logger_OnLogRound;
@@ -45,18 +45,19 @@ namespace KhymeraStepan
         }
         private void Logger_OnLogRound(object sender, LogRoundEventArgs e)
         {
-            ++round; 
-        }
+            ++round;
+        } 
 
-        RobotCommand IRobotAlgorithm.DoStep(IList<Robot.Common.Robot> robots, int robotToMoveIndex, Map map)
+        public RobotCommand DoStep(IList<Robot.Common.Robot> robots, int robotToMoveIndex, Map map)
         {
+            
             Robot.Common.Robot r = robots[robotToMoveIndex];
+            var mybits = robots.Where(xr => xr.OwnerName.Equals("StepanKhymera")).ToList();
 
-
-            int status;
-            if (!fate.TryGetValue(robotToMoveIndex, out status))
+            int status = -1;
+            if (!fate.ContainsKey(robotToMoveIndex))
             {
-                if(round == 0)
+                if (round == 0)
                 {
                     //first 10 bot action
                     var best = FindBest(r.Position, r.Energy, map, robots, robotToMoveIndex);
@@ -79,84 +80,182 @@ namespace KhymeraStepan
                 {
                     //new bot action
 
-                    //murder
+                    var murderOptions = whoToAttack(r.Position, r.Energy, map, robots).ToList() ; // murder check
+                    if (murderOptions.Any())
+                    {
+                        Position murderPosition = null;
+                        for (int i = 10; i >= 0; --i)
+                        {
+                            if (murderOptions[i] != null)
+                            {
+                               
+                                murderPosition = murderOptions[i];
+                                break;
+                            }
+                        } 
+                        if(murderPosition != null)
+                        {
+                            fate.Add(robotToMoveIndex, 1);
+                            return new MoveCommand() { NewPosition = murderPosition };
+
+                        }
+                    }
 
                     //check if wanna stay
-                }
-            } else
-            {
-                //switch of fate
-                switch (status)
-                {
-                    case (0):
-                        {
-                            //check if can duplicate
-                            //collect energy if not
-                            break;
-                        }
-                     //case (1)
+                    bool stay = wannaStay(r.Position, map, robots);
+                    if (stay) {
+                        fate.Add(robotToMoveIndex, 0);
+                        status = 0; 
+                    } else
+                    {
+                        fate.Add(robotToMoveIndex, 1);
+                        status = 2;
+                    }
+
                 }
             }
+            if(status < 0)
+            {
+                status = fate[robotToMoveIndex] ;
+            }
+                //switch of fate
+            switch (status)
+            {
+                case (0): //stay and duplicate + chance to attack
+                    {                        
 
-            var mybits = robots.Where(x => x.OwnerName.Equals("StepanKhymera")).ToList();
-            Position corner = new Position(r.Position.X-5, r.Position.Y-5);
-           
-
-            for (int i = 0; i < 10; ++i){ 
-                corner.X += 1;
-                corner.Y -= 10;
-                    for (int J = 0; J < 10; ++J) {
-                    corner.Y += 1; 
-                     
-                    var found = robots.Where(fr => fr.Position == corner).ToList();
-                        if (found.Any())
-                        {
-                             //if( found.FirstOrDefault().OwnerName != "StepanKhymera")
-                            return new MoveCommand() { NewPosition = corner };
+                        //check if can duplicate
+                        if (r.Energy > 300 && wannaAddMore(r.Position, map, mybits) && mybits.Count() <= 100 ){
+                            return new CreateNewRobotCommand();
                         }
+                        else  //collect energy if not
+                        {
+                            return new CollectEnergyCommand();
+                        }
+
+                     break;
                     }
-                } 
-             
+                case (1): //look for better position
+                    {
+                        var best = FindBest(r.Position, r.Energy, map, robots, robotToMoveIndex);
+                        Position bestPosition = new Position();
+                        for (int i = 10; i > 0; --i)
+                        {
+                            if (best[i] != null)
+                            {
+                                bestPosition = best[i];
+                                break;
+                            } 
+                        }
+                        if(bestPosition == null) {
+                            //jump
+                            double energySacrifice = (r.Energy * 0.6);
+                            int distance = (int)Math.Sqrt(energySacrifice);
+                            Random ran = new Random();
+                            if (ran.Next() % 2 == 0)
+                            {
+                                distance *= (-1);
+                            }
+                            Position jump = r.Position;
+                            if (ran.Next() % 2 == 0)
+                            {
+                                jump.X += distance;
+                            }
+                            else
+                            {
+                                jump.Y += distance;
+                            }
+                            fate[robotToMoveIndex] = 1;
+                            return new MoveCommand() { NewPosition = jump };
+                        }
+                        fate[robotToMoveIndex] = 0;
+                        if (bestPosition.Equals(r.Position))
+                        {
+                            return new CollectEnergyCommand();
+                        } 
+
+                        return new MoveCommand() { NewPosition = bestPosition };
+                        break;
+                    }
+
+                case (2): //jump away
+                    {
+                        double energySacrifice = (r.Energy * 0.6);
+                        int distance = (int)Math.Sqrt(energySacrifice);
+                        Random ran = new Random();
+                        if(ran.Next()%2 == 0)
+                        {
+                            distance *= (-1);
+                        }
+                        Position jump = r.Position;
+                        if (ran.Next() % 2 == 0)
+                        {
+                            jump.X += distance;
+                        } else
+                        {
+                            jump.Y += distance;
+                        }
+                        fate[robotToMoveIndex] = 1;
+                        return new MoveCommand() { NewPosition = jump };
+                    }
+            }
+            
             return new CollectEnergyCommand();
         }
-         
-         
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        public bool IsCellFree(Position cell, Robot.Common.Robot movingrobot,  IList<Robot.Common.Robot> robots)
+        public bool wannaAddMore(Position center, Map map, IList<Robot.Common.Robot> robots)
         {
-            foreach(var robot in robots)
+            int howManyBotsAround = HowManyRobots(center, robots, 5).Count();
+            int howManyStationsAround = HowManyStations(center, map.Stations.ToList());
+            if (howManyBotsAround - 1 > howManyStationsAround)
             {
-                if (robot.Position == cell)
-                {
-                    if(robot != movingrobot)
-                    {
-                        return false;
-                    }
-                }
+                return false;
             }
-            return true;
+            else
+            {
+                return true;
+            }
         }
 
-        //public List<Position> WhoToAttack()
+        public bool wannaStay(Position center, Map map, IList<Robot.Common.Robot> robots)
+        {
+            int howManyBotsAround = HowManyRobots(center, robots, 5).Count();
+            int howManyStationsAround = HowManyStations(center, map.Stations.ToList());
+            if(howManyBotsAround > howManyStationsAround)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        public List<Position> whoToAttack(Position center, int EnergyToSpare, Map map, IList<Robot.Common.Robot> robots)
+        {
+            List<Position> result = new List<Position>() { null, null, null, null, null, null, null, null, null, null, null, null };
+
+            var nearbyRobots = HowManyRobots(center, robots, 4).Where(r => !r.OwnerName.Equals("StepanKhymera")).ToList();
+            foreach(var enemy in nearbyRobots)
+            {
+                int distance = FindDistance(center, enemy.Position);
+                if (distance > EnergyToSpare) continue;
+                var hisStations = HowManyStations(enemy.Position, map.Stations.ToList());
+                if (result[hisStations] == null) { result[hisStations] = enemy.Position; }
+                else
+                {
+                    if (distance < FindDistance(center, result[hisStations]))
+                    {
+                        result[hisStations] = enemy.Position;
+                    }
+                }
+                result[hisStations] = enemy.Position;
+            }
+            return result;
+
+        }
 
        public int HowManyStations(Position center, List<Robot.Common.EnergyStation> stations)
         {
@@ -197,7 +296,7 @@ namespace KhymeraStepan
                     {
                         var myNearbyBots = HowManyRobots(run, mybits, 4);
                         int nearbyStations = HowManyStations(run, stations);
-                        if (myNearbyBots.Count() > nearbyStations)
+                        if (myNearbyBots.Count() >= nearbyStations)
                         {
                             continue;
                         }
@@ -233,29 +332,5 @@ namespace KhymeraStepan
         {
             return (int)(((a.X - b.X)*(a.X - b.X)) + (a.Y - b.Y)* (a.Y - b.Y));
         }
-
-        public Position FindNearestFreeStation(Robot.Common.Robot movingRobot, Map map, IList<Robot.Common.Robot> robots)
-        {
-            EnergyStation nearest = null;
-            int minDistance = int.MaxValue;
-            foreach (var station in map.Stations)
-            {
-                if (IsCellFree(station.Position, movingRobot, robots))
-                {
-                    int d = FindDistance(station.Position, movingRobot.Position);
-                    if (d < minDistance)
-
-                    {
-
-                        minDistance = d;
-                        nearest = station;
-
-                    }
-                }
-            }
-            return nearest == null ? null : nearest.Position;
-        }
-
-
     }
 }
