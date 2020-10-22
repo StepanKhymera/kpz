@@ -28,7 +28,7 @@ using System.ComponentModel;
 Дядя Богдан оберігає код
  */
 
-namespace KhymeraStepan
+namespace KhymeraStepan 
 {
     public class KhymeraStepan : IRobotAlgorithm
     {
