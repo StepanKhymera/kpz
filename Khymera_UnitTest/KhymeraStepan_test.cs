@@ -144,6 +144,7 @@ namespace Khymera_UnitTest
             map.Stations.Add(new Robot.Common.EnergyStation() { Energy = 100, Position = new Position(1, 0) });
             map.Stations.Add(new Robot.Common.EnergyStation() { Energy = 100, Position = new Position(1, 1) });
             map.Stations.Add(new Robot.Common.EnergyStation() { Energy = 100, Position = new Position(1, 2) });
+            map.Stations.Add(new Robot.Common.EnergyStation() { Energy = 100, Position = new Position(2, 9) });
 
             var robots = new List<Robot.Common.Robot>();
             robots.Add(new Robot.Common.Robot() { Position = new Position(2, 1), Energy = 1000, OwnerName = "StepanKhymera" });

@@ -153,7 +153,7 @@ namespace KhymeraStepan
                             Position jumpP = jump(robots, robotToMoveIndex, map);
                             if (jumpP == null)
                             {
-                                fate.Add(robotToMoveIndex, 0);
+                                fate[robotToMoveIndex] = 1;
                                 return new CollectEnergyCommand();
 
                             }
@@ -193,7 +193,7 @@ namespace KhymeraStepan
                         Position jumpP = jump(robots, robotToMoveIndex, map);
                         if (jumpP == null)
                         {
-                            fate.Add(robotToMoveIndex, 0);
+                            fate[robotToMoveIndex] = 1;
                             return new CollectEnergyCommand();
 
                         }
@@ -250,6 +250,13 @@ namespace KhymeraStepan
                 }
             });
 
+            if (bestSpot.Equals(new Position()))
+            {
+                bestSpot = run;
+                toJump = new Position(j.Position.X, j.Position.Y + distance);
+
+            }
+
             if (HowManyStations(bestSpot, map.Stations.ToList()) < HowManyStations(run, map.Stations.ToList()))
             {
                 bestSpot = run;
@@ -266,7 +273,12 @@ namespace KhymeraStepan
                     run = x;
                 }
             });
+            if (bestSpot.Equals(new Position()))
+            {
+                bestSpot = run;
+                toJump = new Position(j.Position.X + distance, j.Position.Y);
 
+            }
             if (HowManyStations(bestSpot, map.Stations.ToList()) < HowManyStations(run, map.Stations.ToList()))
             {
                 bestSpot = run;
@@ -283,7 +295,12 @@ namespace KhymeraStepan
                     run = x;
                 }
             });
+            if (bestSpot.Equals(new Position()))
+            {
+                bestSpot = run;
+                toJump = new Position(j.Position.X - distance, j.Position.Y);
 
+            }
             if (HowManyStations(bestSpot, map.Stations.ToList()) < HowManyStations(run, map.Stations.ToList()))
             {
                 bestSpot = run;
