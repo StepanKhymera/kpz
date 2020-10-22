@@ -104,11 +104,11 @@ namespace KhymeraStepan
                     //check if wanna stay
                     bool stay = wannaStay(r.Position, map, robots);
                     if (stay) {
-                        fate.Add(robotToMoveIndex, 0);
+                        fate.Add(robotToMoveIndex, 0); // stay and duplicate
                         status = 0; 
                     } else
                     {
-                        fate.Add(robotToMoveIndex, 1);
+                        fate.Add(robotToMoveIndex, 1); // jump and look for better spot 
                         status = 2;
                     }
 
@@ -149,24 +149,34 @@ namespace KhymeraStepan
                         }
                         if(bestPosition == null) {
                             //jump
-                            double energySacrifice = (r.Energy * 0.6);
-                            int distance = (int)Math.Sqrt(energySacrifice);
-                            Random ran = new Random();
-                            if (ran.Next() % 2 == 0)
+
+                            Position jumpP = jump(robots, robotToMoveIndex, map);
+                            if (jumpP == null)
                             {
-                                distance *= (-1);
+                                fate.Add(robotToMoveIndex, 0);
+                                return new CollectEnergyCommand();
+
                             }
-                            Position jump = r.Position;
-                            if (ran.Next() % 2 == 0)
-                            {
-                                jump.X += distance;
-                            }
-                            else
-                            {
-                                jump.Y += distance;
-                            }
-                            fate[robotToMoveIndex] = 1;
-                            return new MoveCommand() { NewPosition = jump };
+                            return new MoveCommand() { NewPosition = jump(robots, robotToMoveIndex, map)};
+
+                            //double energySacrifice = (r.Energy * 0.6);
+                            //int distance = (int)Math.Sqrt(energySacrifice);
+                            //Random ran = new Random();
+                            //if (ran.Next() % 2 == 0)
+                            //{
+                            //    distance *= (-1); 
+                            //}
+                            //Position jump = r.Position;
+                            //if (ran.Next() % 2 == 0)
+                            //{
+                            //    jump.X += distance;
+                            //}
+                            //else
+                            //{
+                            //    jump.Y += distance;
+                            //}
+                            //fate[robotToMoveIndex] = 1;
+                            //return new MoveCommand() { NewPosition = jump };
                         }
                         fate[robotToMoveIndex] = 0;
                         if (bestPosition.Equals(r.Position))
@@ -180,30 +190,116 @@ namespace KhymeraStepan
 
                 case (2): //jump away
                     {
-                        double energySacrifice = (r.Energy * 0.6);
-                        int distance = (int)Math.Sqrt(energySacrifice);
-                        Random ran = new Random();
-                        if(ran.Next()%2 == 0)
+                        Position jumpP = jump(robots, robotToMoveIndex, map);
+                        if (jumpP == null)
                         {
-                            distance *= (-1);
+                            fate.Add(robotToMoveIndex, 0);
+                            return new CollectEnergyCommand();
+
                         }
-                        Position jump = r.Position;
-                        if (ran.Next() % 2 == 0)
-                        {
-                            jump.X += distance;
-                        } else
-                        {
-                            jump.Y += distance;
-                        }
-                        fate[robotToMoveIndex] = 1;
-                        return new MoveCommand() { NewPosition = jump };
+                        return new MoveCommand() { NewPosition = jump(robots, robotToMoveIndex, map) };
+                        //double energySacrifice = (r.Energy * 0.6);
+                        //int distance = (int)Math.Sqrt(energySacrifice);
+                        //Random ran = new Random();
+                        //if(ran.Next()%2 == 0)
+                        //{
+                        //    distance *= (-1);
+                        //}
+                        //Position jump = r.Position;
+                        //if (ran.Next() % 2 == 0)
+                        //{
+                        //    jump.X += distance;
+                        //} else
+                        //{
+                        //    jump.Y += distance;
+                        //}
+                        //fate[robotToMoveIndex] = 1;
+                        //return new MoveCommand() { NewPosition = jump };
                     }
             }
             
             return new CollectEnergyCommand();
         }
 
+        public Position jump(IList<Robot.Common.Robot> robots, int robotToMoveIndex, Map map)
+        {
+            Robot.Common.Robot j = robots[robotToMoveIndex];
+            double energySacrifice = (j.Energy * 0.6);
+            int distance = (int)Math.Sqrt(energySacrifice);
+            Position bestSpot = new Position();
+            Position run = new Position();
+            Position toJump = new Position();
+            var bestPositions = FindBest(new Position(j.Position.X, j.Position.Y - distance), (int)(j.Energy * 0.4), map, robots, robotToMoveIndex);
+            bestPositions.ForEach(x =>
+            {
+                if(x != null)
+                {
+                    bestSpot = x;
+                }
+            });
+            toJump = new Position(j.Position.X, j.Position.Y - distance);
 
+            bestPositions.Clear();
+
+            bestPositions = FindBest(new Position(j.Position.X, j.Position.Y + distance), (int)(j.Energy * 0.4), map, robots, robotToMoveIndex);
+            bestPositions.ForEach(x =>
+            {
+                if (x != null)
+                {
+                    run = x;
+                }
+            });
+
+            if (HowManyStations(bestSpot, map.Stations.ToList()) < HowManyStations(run, map.Stations.ToList()))
+            {
+                bestSpot = run;
+                toJump = new Position(j.Position.X, j.Position.Y + distance);
+
+            }
+            bestPositions.Clear();
+
+            bestPositions = FindBest(new Position(j.Position.X + distance, j.Position.Y ), (int)(j.Energy * 0.4), map, robots, robotToMoveIndex);
+            bestPositions.ForEach(x =>
+            {
+                if (x != null)
+                {
+                    run = x;
+                }
+            });
+
+            if (HowManyStations(bestSpot, map.Stations.ToList()) < HowManyStations(run, map.Stations.ToList()))
+            {
+                bestSpot = run;
+                toJump = new Position(j.Position.X + distance , j.Position.Y);
+
+            }
+            bestPositions.Clear();
+
+            bestPositions = FindBest(new Position(j.Position.X - distance, j.Position.Y ), (int)(j.Energy * 0.4), map, robots, robotToMoveIndex);
+            bestPositions.ForEach(x =>
+            {
+                if (x != null)
+                {
+                    run = x;
+                }
+            });
+
+            if (HowManyStations(bestSpot, map.Stations.ToList()) < HowManyStations(run, map.Stations.ToList()))
+            {
+                bestSpot = run;
+                toJump = new Position(j.Position.X - distance, j.Position.Y);
+
+            }
+            if(bestSpot.Equals(new Position()))
+            {
+                return null;
+            }
+
+            return toJump;
+
+
+
+        }
 
         public bool wannaAddMore(Position center, Map map, IList<Robot.Common.Robot> robots)
         {
