@@ -118,11 +118,18 @@ namespace KhymeraStepan
             {
                 status = fate[robotToMoveIndex] ;
             }
-                //switch of fate
+
+            //switch of fate
             switch (status)
             {
                 case (0): //stay and duplicate + chance to attack
-                    {                        
+                    {
+                        Random ran = new Random();
+                        if(ran.Next()%100 <= 1)
+                        {
+                            fate[robotToMoveIndex] = 1;
+
+                        }
 
                         //check if can duplicate
                         if (r.Energy > 300 && wannaAddMore(r.Position, map, mybits) && mybits.Count() < 100 ){
