@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using DocumentFormat.OpenXml.Drawing.Diagrams;
+
 namespace Events_And_LINQ
 {
     public class DirectionEventArgs : EventArgs
@@ -65,8 +67,7 @@ namespace Events_And_LINQ
             while (true)
             {
                 SetMap();
-                ConsoleKeyInfo input = Console.ReadKey(true); // BLOCKING TO WAIT FOR INPUT
-                //Console.WriteLine(input.Key.ToString());
+                ConsoleKeyInfo input = Console.ReadKey(true); 
                 switch (input.Key)
                 {
                     case ConsoleKey.UpArrow:
@@ -115,11 +116,12 @@ namespace Events_And_LINQ
             {
                 ArrowsPressed += MapManager.OnMoved;
                 WASDPressed -= MapManager.OnMoved;
+                WASDControl = false;
             } else
             {
                 ArrowsPressed -= MapManager.OnMoved;
                 WASDPressed += MapManager.OnMoved;
-
+                WASDControl = true;
             }
         }
 
@@ -140,54 +142,48 @@ namespace Events_And_LINQ
             if (currentMap.enemies.Any())
             {
                 Console.WriteLine("You spotted few enemies moving towards you:");
-
-                if(currentMap.enemies[0] != null)
+                currentMap.enemies.ForEach(en =>
                 {
                     char button = (char)ran.Next(69, 86);
-                    Console.WriteLine(currentMap.enemies[0].name + " (Press \"" + button + "\" to kill)");
-                    currentMap.keyEnemie.Add(button, currentMap.enemies[0]);
-                }
-
-
-                if (currentMap.enemies.Count() > 1 && currentMap.enemies[1] != null)
-                {
-                    char button = (char)ran.Next(69, 86);
-                    if (currentMap.keyEnemie.ContainsKey(button)) button = (char)((int)button +1);
-                    Console.WriteLine(currentMap.enemies[1].name + " (Press \"" + button + "\" to kill)");
-
-                    currentMap.keyEnemie.Add(button, currentMap.enemies[1]);
-                }
+                    if (currentMap.keyEnemie.ContainsKey(button)) button = (char)((int)button + 1);
+                    Console.WriteLine(en.name + " (Press \"" + button + "\" to kill)");
+                    currentMap.keyEnemie.Add(button, en);
+                });
             }
 
             if (currentMap.resourses.Any())
             {
                 Console.WriteLine("You see some usefull herbs:");
+
                 if (currentMap.resourses[0] != null)
                 {
-                    char button = (char)ran.Next(69, 86);
-                    if (currentMap.keyResourse.ContainsKey(button)) button = (char)((int)button + 1);
+                    currentMap.resourses.ForEach(rs =>
+                    {
+                        char button = (char)ran.Next(69, 86);
+                        if (currentMap.keyResourse.ContainsKey(button)) button = (char)((int)button + 1);
+                        Console.WriteLine(rs.name + " (Press \"" + button + "\" to harvest)");
+                        currentMap.keyResourse.Add(button, rs);
 
-                    Console.WriteLine(currentMap.resourses[0].name + " (Press \"" + button + "\" to harvest)");
-                    currentMap.keyResourse.Add(button, currentMap.resourses[0]);
+                    });
                 }
-
-                   
-                if (currentMap.resourses.Count() > 1 && currentMap.resourses[1] != null)
-                {
-                    char button = (char)ran.Next(69, 86);
-                    if (currentMap.keyResourse.ContainsKey(button)) button = (char)((int)button + 1);
-                    Console.WriteLine(currentMap.resourses[1].name + " (Press \"" + button + "\" to harvest)");
-                    currentMap.keyResourse.Add(button, currentMap.resourses[1]);
-                }
-
-                   
             }
             Console.WriteLine(eightDashes);
+
             Console.WriteLine("HEALTH: " + new string('#', MapManager.health) );
             Console.WriteLine("Inventory:");
-            foreach (KeyValuePair<Items, int> entry in this.MapManager.inventory)
+            var keys =  new List<Items>(MapManager.inventory.Keys);
+            foreach (Items entry in keys.ToArray())
             {
-                Console.WriteLine(ItemStrings[(int)(entry.Key)] + ": " + entry.Value.ToString());
+                Console.WriteLine(ItemStrings[(int)(entry)] + ": " + MapManager.inventory[entry]);
+            }
+            Console.WriteLine(eightDashes);
+
+            if (this.WASDControl)
+            {
+                Console.WriteLine("Controls: WASD");
+            } else
+            {
+                Console.WriteLine("Controls: Arrows");
             }
             Console.WriteLine("");
         }

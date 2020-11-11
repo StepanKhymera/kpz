@@ -22,7 +22,7 @@ namespace Events_And_LINQ
 
         Resourse AbstractGen.CreateResourse()
         {
-            return new Resourse("Green Leaf", 1, Items.green_leaf );
+            return new Resourse() {name = "Green Leaf", amounts = 1, type = Items.green_leaf };
         }
     }
 
@@ -30,12 +30,12 @@ namespace Events_And_LINQ
     {
         Enemy AbstractGen.CreateEnemy()
         {
-            return new Enemy("Bat", 2, Monsters.bat, Items.bat_wings);
+            return new Enemy() {name = "Bat",damage = 2,type = Monsters.bat, loot = Items.bat_wings };
         }
 
         Resourse AbstractGen.CreateResourse()
         {
-            return new Resourse("Yellow Leaf", 1, Items.yellow_leaf);
+            return new Resourse() {name = "Yellow Leaf",amounts = 1,type = Items.yellow_leaf };
         }
     };
 
@@ -43,12 +43,12 @@ namespace Events_And_LINQ
     {
         Enemy AbstractGen.CreateEnemy()
         {
-            return new Enemy("Ghost", 2, Monsters.ghost, Items.ectoplasm);
+            return new Enemy() {name = "Ghost",damage = 2, type = Monsters.ghost,loot = Items.ectoplasm };
         }
 
         Resourse AbstractGen.CreateResourse()
         {
-            return new Resourse("Blue Leaf", 1, Items.blue_leaf);
+            return new Resourse() {name = "Blue Leaf",amounts = 1,type = Items.blue_leaf };
         }
     }
 
@@ -57,12 +57,12 @@ namespace Events_And_LINQ
     {
         Enemy AbstractGen.CreateEnemy()
         {
-            return new Enemy("Golem", 2, Monsters.golem, Items.stone);
+            return new Enemy() { name = "Golem",damage = 2, type = Monsters.golem, loot = Items.stone };
         }
 
         Resourse AbstractGen.CreateResourse()
         {
-            return new Resourse("Red Leaf", 1, Items.red_leaf);
+            return new Resourse() {     name = "Red Leaf",amounts = 1,  type = Items.red_leaf };
         }
     };
 
@@ -70,12 +70,12 @@ namespace Events_And_LINQ
     {
         Enemy AbstractGen.CreateEnemy()
         {
-            return new Enemy("Shaman", 2, Monsters.shaman, Items.gunpowder);
+            return new Enemy() {name = "Shaman",damage = 2, type = Monsters.shaman, loot = Items.gunpowder };
         }
 
         Resourse AbstractGen.CreateResourse()
         {
-            return new Resourse("Yellow Leaf", 1, Items.yellow_leaf);
+            return new Resourse() {name = "Yellow Leaf", amounts = 1, type = Items.yellow_leaf };
         }
     };
 
@@ -83,12 +83,12 @@ namespace Events_And_LINQ
     {
         Enemy AbstractGen.CreateEnemy()
         {
-            return new Enemy("Skeleton", 2, Monsters.skeleton, Items.bone);
+            return new Enemy() {name = "Skeleton", damage = 2, type = Monsters.skeleton, loot = Items.bone };
         }
 
         Resourse AbstractGen.CreateResourse()
         {
-            return new Resourse("Purple Leaf", 1, Items.purple_leaf);
+            return new Resourse() {name = "Purple Leaf", amounts = 1, type = Items.purple_leaf };
         }
     };
     public class MapManager
@@ -158,7 +158,8 @@ namespace Events_And_LINQ
             char letter = dir.letter;
             Items type;
             int amount;
-            if (currentMap.keyEnemie.ContainsKey(letter))
+            var keys = currentMap.keyEnemie.Select(x => x.Key);
+            if (keys.Contains(letter))
             {
                 Enemy extract = currentMap.keyEnemie[letter];
                 currentMap.keyEnemie.Remove(letter);
@@ -167,17 +168,22 @@ namespace Events_And_LINQ
                 amount = 1;
                 health -= extract.damage;
 
-            } else
-            if (currentMap.keyResourse.ContainsKey(letter))
+            }
+            else
             {
-                Resourse extract = currentMap.keyResourse[letter];
-                currentMap.keyResourse.Remove(letter);
-                currentMap.resourses.Remove(extract);
-                type = extract.type;
-                amount = extract.amounts;
-            } else
-            {
-                return;
+                keys = currentMap.keyResourse.Select(x => x.Key);
+                if (keys.Contains(letter))
+                {
+                    Resourse extract = currentMap.keyResourse[letter];
+                    currentMap.keyResourse.Remove(letter);
+                    currentMap.resourses.Remove(extract);
+                    type = extract.type;
+                    amount = extract.amounts;
+                }
+                else
+                {
+                    return;
+                }
             }
 
              if (inventory.ContainsKey(type))
