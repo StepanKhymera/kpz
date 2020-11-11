@@ -14,12 +14,7 @@ namespace Events_And_LINQ
         public int amounts;
         public Items type;
 
-        public Resourse(string name, int amounts, Items type)
-        {
-            this.name = name;
-            this.amounts = amounts;
-            this.type = type;
-        }
+  
         public int CompareTo(Resourse next)
         {
             return next.name.CompareTo(this.name);
@@ -32,20 +27,12 @@ namespace Events_And_LINQ
             public Monsters type;
             public Items loot;
 
-            public Enemy(string name, int damage, Monsters type)
-            {
-                this.name = name;
-                this.damage = damage;
-                this.type = type;
-            }
+ 
         public int CompareTo(Enemy next)
         {
             return next.name.CompareTo(this.name);
         }
-        public Enemy(string name, int damage, Monsters type, Items loot) : this(name, damage, type)
-        {
-            this.loot = loot;
-        }
+
         }
     
 };
